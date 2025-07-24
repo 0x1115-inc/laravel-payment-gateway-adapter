@@ -25,13 +25,13 @@
     "extra": {
         "laravel": {
             "providers": [
-                "mcxv\\LaravelPaymentAdapter\\LaravelPaymentAdapterServiceProvider"
+                "MCXV\\PaymentAdapter\\PaymentAdapterServiceProvider"
             ]
         }
     },
     "autoload": {
         "psr-4": {
-            "mcxv\\LaravelPaymentAdapter\\": "src/"
+            "MCXV\\PaymentAdapter\\": "src/"
         }
     },
     "minimum-stability": "dev",
