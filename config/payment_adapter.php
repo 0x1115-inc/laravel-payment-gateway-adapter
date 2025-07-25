@@ -43,7 +43,8 @@ return [
 
     'drivers' => [
         'cpg' => [
-            'apikey' => env('CPG_API_KEY', '')            
+            'api_url' => env('CPG_API_URL', 'https://api.cpg.com/api'),
+            'apikey' => env('CPG_API_KEY', '')
         ],
         'coinbase' => [
             'api_key' => env('COINBASE_API_KEY', ''),
