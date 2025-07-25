@@ -17,7 +17,8 @@
 
 namespace MCXV\PaymentAdapter\Drivers;
 use MCXV\PaymentAdapter\Contracts\PaymentGatewayInterface;
-use MCXV\PaymentAdapter\Contracts\PaymentInterface;
+use MCXV\PaymentAdapter\DTO\PaymentDTO;
+
 
 class CoinbaseDriver implements PaymentGatewayInterface
 {
@@ -27,36 +28,52 @@ class CoinbaseDriver implements PaymentGatewayInterface
     {
         $this->config = $config;
     }
-
+    /**
+     * Get list of all payments with optional filter.
+     *
+     * @return PaymentDTO[]
+     */
     public function getPayments(array $filters): array
     {
         // Implement logic to retrieve payments from Coinbase API
+        // This is a placeholder implementation
         return [];
     }
 
-    public function getPaymentById(string $id): PaymentInterface
+    /**
+     * Get a payment by its unique identifier.
+     *
+     * @param string $id
+     * @return PaymentDTO
+     */
+    public function getPaymentById(string $id): PaymentDTO
     {
         // Implement logic to retrieve a specific payment by ID from Coinbase API
-        return new class implements PaymentInterface {
-            public function getId(): string { return ''; }
-            public function getAmount(): float { return 0.0; }
-            public function getCurrency(): string { return ''; }
-            public function getStatus(): string { return ''; }
-            public function getCryptoNetwork(): string { return ''; }
-            public function getCryptoAddress(): string { return ''; }
-        };
+        // This is a placeholder implementation
+        $payment = new PaymentDTO();
+        $payment->id = $id;
+        $payment->amount = '0.00';
+        $payment->currency = 'USD';
+        $payment->status = 'PENDING';
+        $payment->cryptoNetwork = 'BTC';
+        $payment->address = '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa';
+
+        return $payment;
     }
 
-    public function createPayment(array $data): PaymentInterface
+    /**
+     * Create a new payment with the provided data.
+     *
+     * @param PaymentDTO $payment
+     * @return PaymentDTO
+     */
+    public function createPayment(PaymentDTO $payment): PaymentDTO
     {
-        // Implement logic to create a new payment in Coinbase
-        return new class implements PaymentInterface {
-            public function getId(): string { return ''; }
-            public function getAmount(): float { return 0.0; }
-            public function getCurrency(): string { return ''; }
-            public function getStatus(): string { return ''; }
-            public function getCryptoNetwork(): string { return ''; }
-            public function getCryptoAddress(): string { return ''; }
-        };
+        // Implement logic to create a new payment using Coinbase API
+        // This is a placeholder implementation
+        $payment->id = 'new_payment_id';
+        $payment->status = 'PENDING';
+
+        return $payment;
     }
 }

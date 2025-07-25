@@ -16,31 +16,30 @@
  */
 
 namespace MCXV\PaymentAdapter\Contracts;
-
-use MCXV\PaymentAdapter\Contracts\PaymentInterface;
+use MCXV\PaymentAdapter\DTO\PaymentDTO;
 
 interface PaymentGatewayInterface
 {
     /**
      * Get list of all payments with optional filter.
      *
-     * @return string
+     * @return PaymentDTO[]
      */
     public function getPayments(array $filters): array;
 
     /**
      * Get a payment by its unique identifier.
      *
-     * @param string $id
-     * @return PaymentInterface
+     * @param string $id     
+     * @return PaymentDTO
      */
-    public function getPaymentById(string $id): PaymentInterface;
+    public function getPaymentById(string $id): PaymentDTO;
 
     /**
      * Create a new payment with the provided data.
      *
-     * @param array $data
-     * @return PaymentInterface
+     * @param PaymentDTO $payment
+     * @return PaymentDTO
      */
-    public function createPayment(array $data): PaymentInterface;
+    public function createPayment(PaymentDTO $payment): PaymentDTO;
 }
