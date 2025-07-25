@@ -61,13 +61,32 @@ class PaymentDTO
      */
     public string $cryptoAddress;
 
+    /**
+     * The latest time in UNIX timestamp format when the payment is valid.     
+     *
+     * @var int
+     */
+    public int $expirationTime;
+
+    /**
+     * Constructor to initialize the PaymentDTO.
+     *
+     * @param string $id Unique identifier for the payment.
+     * @param string $amount Amount of the payment in crypto currency.
+     * @param string $currency Currency of the payment.
+     * @param string $status Status of the payment.
+     * @param string $cryptoNetwork Network used for the cryptocurrency payment.
+     * @param string $cryptoAddress Cryptocurrency address for the payment.
+     */
+
     public function __construct(
         string $id,
         string $amount,
         string $currency,
         string $status,
         string $cryptoNetwork,
-        string $cryptoAddress
+        string $cryptoAddress,
+        int $expirationTime
     ) {
         $this->id = $id;
         $this->amount = $amount;
@@ -75,5 +94,6 @@ class PaymentDTO
         $this->status = $status;
         $this->cryptoNetwork = $cryptoNetwork;
         $this->cryptoAddress = $cryptoAddress;
+        $this->expirationTime = $expirationTime;
     }
 }
