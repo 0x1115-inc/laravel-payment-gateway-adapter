@@ -77,6 +77,7 @@ class PaymentDTO
      * @param string $status Status of the payment.
      * @param string $cryptoNetwork Network used for the cryptocurrency payment.
      * @param string $cryptoAddress Cryptocurrency address for the payment.
+     * @param int $expirationTime The latest time in UNIX timestamp format when the payment is valid.
      */
 
     public function __construct(

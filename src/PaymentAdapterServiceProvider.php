@@ -18,6 +18,9 @@
 namespace MCXV\LaravelPaymentAdapter;
 
 use Illuminate\Support\ServiceProvider;
+
+use MCXV\PaymentAdapter\PaymentAdapterManager;
+
 class PaymentAdapterServiceProvider extends \Illuminate\Support\ServiceProvider
 {
     /**
@@ -38,5 +41,9 @@ class PaymentAdapterServiceProvider extends \Illuminate\Support\ServiceProvider
             __DIR__ . '/../config/payment_adapter.php',
             'payment_adapter'
         );
+
+        $this->app->singleton('payment.adapter', function ($app) {            
+            return new PaymentAdapterManager($app);
+        });
     }
 }
