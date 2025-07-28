@@ -50,6 +50,12 @@ return [
             'api_key' => env('COINBASE_API_KEY', ''),
             'api_secret' => env('COINBASE_API_SECRET', ''),
             'webhook_secret' => env('COINBASE_WEBHOOK_SECRET', ''),
+        ],
+        'coinpayment' => [
+            'merchant_id' => env('COINPAYMENT_MERCHANT_ID', ''),
+            'public_key' => env('COINPAYMENT_PUBLIC_KEY', ''),
+            'private_key' => env('COINPAYMENT_PRIVATE_KEY', ''),
+            'ipn_secret' => env('COINPAYMENT_IPN_SECRET', ''),
         ]
-    ],
-],
+    ]
+];
