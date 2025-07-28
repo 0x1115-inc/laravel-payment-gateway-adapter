@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-namespace MCXV\LaravelPaymentAdapter;
+namespace MCXV\PaymentAdapter;
 
 use Illuminate\Support\ServiceProvider;
 
 use MCXV\PaymentAdapter\PaymentAdapterManager;
 
-class PaymentAdapterServiceProvider extends \Illuminate\Support\ServiceProvider
+class PaymentAdapterServiceProvider extends ServiceProvider
 {
     /**
      * Indicates if loading of the provider is deferred.
@@ -36,12 +36,12 @@ class PaymentAdapterServiceProvider extends \Illuminate\Support\ServiceProvider
     }
 
     public function register()
-    {
+    {        
         $this->mergeConfigFrom(
             __DIR__ . '/../config/payment_adapter.php',
             'payment_adapter'
         );
-
+        
         $this->app->singleton('payment.adapter', function ($app) {            
             return new PaymentAdapterManager($app);
         });

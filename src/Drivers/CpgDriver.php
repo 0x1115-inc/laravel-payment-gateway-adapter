@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-namespace MCXV\LaravelPaymentAdapter\Drivers;
+namespace MCXV\PaymentAdapter\Drivers;
 use MCXV\PaymentAdapter\Contracts\PaymentGatewayInterface;
 use MCXV\PaymentAdapter\DTO\PaymentDTO;
 
@@ -39,7 +39,7 @@ class CpgDriver implements PaymentGatewayInterface
     public function getPayments(array $filters): array
     {
         // Call CPG API to retrieve payments
-        $response = HTTP::withHeaders([
+        $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->config['api_key'],            
         ])->get($this->config['api_url'] . '/payments', [
             'filters' => $filters
@@ -73,7 +73,7 @@ class CpgDriver implements PaymentGatewayInterface
     public function getPaymentById(string $id): PaymentDTO
     {
         // Call CPG API to retrieve a specific payment by ID
-        $response = HTTP::withHeaders([
+        $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->config['api_key'],            
         ])->get($this->config['api_url'] . '/payments/' . $id);
         if ($response->failed()) {
@@ -100,7 +100,7 @@ class CpgDriver implements PaymentGatewayInterface
      */
     public function createPayment(PaymentDTO $payment): PaymentDTO
     {
-        $response = HTTP::withHeaders([
+        $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->config['api_key'],            
         ])->post($this->config['api_url'] . '/payments', [
             'amount' => $payment->amount,
