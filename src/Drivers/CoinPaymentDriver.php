@@ -17,7 +17,7 @@
 
 namespace MCXV\PaymentAdapter\Drivers;
 use MCXV\PaymentAdapter\Contracts\PaymentGatewayInterface;
-use MCXV\PaymentAdapter\DTO\PaymentDTO;
+use MCXV\PaymentAdapter\DTO\CryptoInvoiceDTO;
 
 use Illuminate\Support\Facades\Http;
 
@@ -31,68 +31,162 @@ class CoinPaymentDriver implements PaymentGatewayInterface
         $this->config = $config;
     }
 
-    private function __signatureConstruction() : string
+    private function __header(array $data) : array
     {
-        $message = '\ufeff'
-    }
+        // Reference: https://a-docs.coinpayments.net/api/auth/generate-api-signature
 
-    /**
-     * Get list of all payments with optional filter.
-     *
-     * @return PaymentDTO[]
-     */
-    public function getPayments(array $filters): array
-    {
+        // The current timestamp in UTC ISO-8601 format 
+        // without milliseconds and timezone (YYYY-MM-DDTHH:mm:ss)
+        $currentTimestamp = now()->toIso8601String();
+        $currentTimestamp = substr($currentTimestamp, 0, 19); // Remove milliseconds and timezone
+
+        // Construct the signature message parts
+        // The message will be included 
+        // - \ufeff (Byte Order Mark)
+        // - HTTP method
+        // - URL
+        // - Integration Client ID
+        // - Timestamp (UTC ISO-8601 YYYY-MM-DDTHH:mm:ss)
+        // - Request payload (JSON)
+        $messageParts = [
+            "\xEF\xBB\xBF",
+            $data['method'],
+            $data['url'],
+            $this->config['client_id'],
+            $currentTimestamp,
+            json_encode($data['payload']),
+        ]
+
+        // Base64 encode the resulting SHA-256 hash.        
+        $signature = hash_hmac(
+            'sha256', 
+            implode('', $messageParts), 
+            $this->config['client_secret'], 
+            true // return raw binary output
+        );
+
+
+        $return [
+            // The integration client id
+            'X-CoinPayments-Client': $this->config['client_id'],
+            
+            // The current timestamp in UTC ISO-8601 format (YYYY-MM-DDTHH:mm:ss)
+            'X-CoinPayments-Timestamp': $currentTimestamp
+
+            // The signature of the request, generated using the secret key
+            'X-CoinPayments-Signature': base64_encode($signature),
+        ]
         
-
-        // This is a placeholder implementation
-        return [];
     }
 
     /**
-     * Get a payment by its unique identifier.
+     * Get list of all invoices with optional filter.
+     *
+     * @param array $filters
+     * @return CryptoInvoiceDTO[]
+     */
+     
+    public function getInvoices(array $filters): array
+    {        
+        $url = 'https://a-api.coinpayments.net/api/v2/merchant/invoices'
+
+        $response = Http::withHeaders($this->__header([
+            'method' => 'GET',
+            'url' => $url,
+            'payload' => $filters,
+        ]))->get($url, $filters);
+
+        // Handle request failure
+        if ($response->failed()) {
+            throw new \Exception('Failed to retrieve invoices: ' . $response->body());
+        }
+
+        // Parse the response data
+        $data = $response->json();
+        if (!isset($data['data']) || !is_array($data['data'])) {
+            throw new \Exception('Invalid response format: ' . $response->body());
+        }
+        $invoices = [];
+
+        // TODO: Implement logic to convert response data to CryptoInvoiceDTO objects
+
+        return $invoices;
+    }
+
+    /**
+     * Get an invoice by its unique identifier.
      *
      * @param string $id
-     * @return PaymentDTO
+     * @return CryptoInvoiceDTO
      */
-    public function getPaymentById(string $id): PaymentDTO
+    public function getInvoiceById(string $id): CryptoInvoiceDTO
     {
-        // Implement logic to retrieve a specific payment by ID from CoinPayment API
-        // This is a placeholder implementation
-        $payment = new PaymentDTO();
-        $payment->id = $id;
-        $payment->amount = '0.00';
-        $payment->currency = 'USD';
-        $payment->status = 'PENDING';
-        $payment->cryptoNetwork = 'BTC';
-        $payment->address = '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa';
+        $url = 'https://a-api.coinpayments.net/api/v2/merchant/invoices/' . $id;
+        
+        $response = Http::withHeaders($this->__header([
+            'method' => 'GET',
+            'url' => $url,
+            'payload' => [],
+        ]))->get($url);
 
-        return $payment;
+        // Handle request failure
+        if ($response->failed()) {
+            throw new \Exception('Failed to retrieve invoice: ' . $response->body());
+        }
+
+        // Parse the response data
+        $data = $response->json();
+        if (!isset($data['data'])) {
+            throw new \Exception('Invoice not found: ' . $id);
+        }
+
+        
+        // TODO: Handle the response data and convert it to CryptoInvoiceDTO
+        $invoice = new CryptoInvoiceDTO();
+        
+        return $invoice;
     }
 
     /**
-     * Create a new payment.
+     * Create a new invoice with the provided data.
      *
-     * @param PaymentDTO $payment
-     * @return PaymentDTO
+     * @param CryptoInvoiceDTO $invoice
+     * @return CryptoInvoiceDTO
      */
-    public function createPayment(PaymentDTO $payment): PaymentDTO
+    public function createInvoice(CryptoInvoiceDTO $invoice): CryptoInvoiceDTO
     {
-        // Implement logic to create a new payment in CoinPayment API
-        // This is a placeholder implementation
-        return $payment;
+        $url = 'https://a-api.coinpayments.net/api/v2/merchant/invoices';
+        
+        $payload = [
+            // TODO: Prepare the payload for the request
+        ];
+
+        $response = Http::withHeaders($this->__header([
+            'method' => 'POST',
+            'url' => $url,
+            'payload' => $payload,
+        ]))->post($url, $payload);
+
+        // Handle request failure
+        if ($response->failed()) {
+            throw new \Exception('Failed to create invoice: ' . $response->body());
+        }
+
+        // Parse the response data
+        $data = $response->json();
+        if (!isset($data['data'])) {
+            throw new \Exception('Failed to create invoice: ' . $response->body());
+        }
+
+        // TODO: Handle the response data and convert it to CryptoInvoiceDTO
+        $invoice = new CryptoInvoiceDTO();        
+
+        // TODO: Broadcast the invoice created event 
+
+        return $invoice;
     }
 
-    /**
-     * Update an existing payment.
-     *
-     * @param PaymentDTO $payment
-     * @return PaymentDTO
-     */
-    public function updatePayment(PaymentDTO $payment): PaymentDTO
-    {
-        // Implement logic to update an existing payment in CoinPayment API
-        // This is a placeholder implementation
-        return $payment;
-    }
+
+
+    
 }

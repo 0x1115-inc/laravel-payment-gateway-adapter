@@ -52,10 +52,8 @@ return [
             'webhook_secret' => env('COINBASE_WEBHOOK_SECRET', ''),
         ],
         'coinpayment' => [
-            'merchant_id' => env('COINPAYMENT_MERCHANT_ID', ''),
-            'public_key' => env('COINPAYMENT_PUBLIC_KEY', ''),
-            'private_key' => env('COINPAYMENT_PRIVATE_KEY', ''),
-            'ipn_secret' => env('COINPAYMENT_IPN_SECRET', ''),
+            'client_id' => env('COINPAYMENT_CLIENT_ID', ''),
+            'client_secret' => env('COINPAYMENT_CLIENT_SECRET', ''),            
         ]
     ]
 ];
