@@ -16,30 +16,30 @@
  */
 
 namespace MCXV\PaymentAdapter\Contracts;
-use MCXV\PaymentAdapter\DTO\PaymentDTO;
+use MCXV\PaymentAdapter\DTO\CryptoInvoiceDTO;
 
 interface PaymentGatewayInterface
 {
     /**
-     * Get list of all payments with optional filter.
+     * Get list of all invoices with optional filter.
      *
-     * @return PaymentDTO[]
+     * @return CryptoInvoiceDTO[]
      */
-    public function getPayments(array $filters): array;
+    public function getInvoices(array $filters): array;
 
     /**
-     * Get a payment by its unique identifier.
+     * Get an invoice by its unique identifier.
      *
      * @param string $id     
-     * @return PaymentDTO
+     * @return CryptoInvoiceDTO
      */
-    public function getPaymentById(string $id): PaymentDTO;
+    public function getInvoiceById(string $id): CryptoInvoiceDTO;
 
     /**
-     * Create a new payment with the provided data.
+     * Create a new invoice with the provided data.
      *
-     * @param PaymentDTO $payment
-     * @return PaymentDTO
+     * @param CryptoInvoiceDTO $payment
+     * @return CryptoInvoiceDTO
      */
-    public function createPayment(PaymentDTO $payment): PaymentDTO;
+    public function createInvoice(CryptoInvoiceDTO $invoice): CryptoInvoiceDTO;
 }
