@@ -123,4 +123,13 @@ class CryptoInvoiceDTO
         $this->successUrl = $successUrl ?? '';
     }
     
+    public function getId() : string
+    {
+        return $this->id;
+    }
+
+    public function getAmount()
+    {
+        return $this->amount;
+    }    
 }
