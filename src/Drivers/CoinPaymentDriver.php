@@ -219,24 +219,32 @@ class CoinPaymentDriver implements PaymentGatewayInterface
         
         $response = Http::withHeaders($this->__header([
             'method' => 'GET',
-            'url' => $url,
-            'payload' => [],
+            'url' => $url            
         ]))->get($url);
 
         // Handle request failure
         if ($response->failed()) {
+            if ($response->status() === 404) {
+                throw new \Exception('Invoice not found: ' . $id);
+            }
             throw new \Exception('Failed to retrieve invoice: ' . $response->body());
         }
 
         // Parse the response data
-        $data = $response->json();
-        if (!isset($data['data'])) {
+        $data = $response->json();        
+        if (!isset($data)) {
             throw new \Exception('Invoice not found: ' . $id);
         }
-
         
-        // TODO: Handle the response data and convert it to CryptoInvoiceDTO
-        $invoice = new CryptoInvoiceDTO();
+        $invoice = new CryptoInvoiceDTO(
+            $data['id'],
+            $data['amount']['total'],
+            $this->_currencyMapping($data['currency']['id']),
+            $this->_statusMapping($data['status']),
+            $this->_getPaymentAddress($data['id'], $data['currency']['id']),
+            Carbon::parse($data['dueDate'])->unix(),
+            $data['notes'] ?? null // Description
+        );
         
         return $invoice;
     }
