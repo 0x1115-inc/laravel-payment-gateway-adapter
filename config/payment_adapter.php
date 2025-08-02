@@ -52,6 +52,7 @@ return [
             'webhook_secret' => env('COINBASE_WEBHOOK_SECRET', ''),
         ],
         'coinpayment' => [
+            'environment' => env('COINPAYMENT_ENVIRONMENT', 'sandbox'), // 'sandbox' or 'production'
             'client_id' => env('COINPAYMENT_CLIENT_ID', ''),
             'client_secret' => env('COINPAYMENT_CLIENT_SECRET', ''),            
         ]

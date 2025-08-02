@@ -69,8 +69,7 @@ class CoinPaymentDriver implements PaymentGatewayInterface
         );
 
 
-        return [
-            'messenger' => $messageParts,
+        return [            
             // The integration client id
             'X-CoinPayments-Client' => $this->config['client_id'],
             
@@ -135,6 +134,42 @@ class CoinPaymentDriver implements PaymentGatewayInterface
     }
 
     /**
+     * Get the payment address for a specific invoice.
+     *
+     * @param string $invoiceId
+     * @param string $currencyId
+     * @return string
+     */
+    private function _getPaymentAddress(string $invoiceId, string $currencyId): string
+    {
+        if ($this->config['environment'] !== 'production') {
+            // In test environment, return a dummy address
+            return '0x1115DummyAddressForTesting';
+        }
+
+        $url = "https://a-api.coinpayments.net/api/v1/invoices/{$invoiceId}/payment-currencies/{$currencyId}";
+     
+        $response = Http::withHeaders($this->__header([
+            'method' => 'GET',
+            'url' => $url
+        ]))->get($url);
+
+        // Handle request failure
+        if ($response->failed()) {
+            throw new \Exception('Failed to retrieve payment address: ' . $response->body());
+        }
+        // Parse the response data
+        $data = $response->json();
+
+        // The address is expected to be in the 'addresses.address' field
+        if (!isset($data['addresses']['address'])) {
+            throw new \Exception('Payment address not found for invoice: ' . $invoiceId);
+        }
+
+        // Return the payment address for the specified currency
+        return $data['addresses']['address'];        
+    }
+    /**
      * Get list of all invoices with optional filter.
      *
      * @param array $filters
@@ -163,16 +198,12 @@ class CoinPaymentDriver implements PaymentGatewayInterface
                 $invoiceData['amount']['total'],
                 $this->_currencyMapping($invoiceData['currency']['id']),
                 $this->_statusMapping($invoiceData['status']),                
-                'payment-address',
+                $this->_getPaymentAddress($invoiceData['id'], $invoiceData['currency']['id']),
                 Carbon::parse($invoiceData['dueDate'])->unix(),
                 $invoiceData['notes'] ?? null // Description                
             );
         }
-        
-        dd($invoices);
-
-        // TODO: Implement logic to convert response data to CryptoInvoiceDTO objects
-
+         
         return $invoices;
     }
 
