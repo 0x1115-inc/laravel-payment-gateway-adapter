@@ -19,6 +19,7 @@ namespace MCXV\PaymentAdapter\Drivers;
 use MCXV\PaymentAdapter\Contracts\PaymentGatewayInterface;
 use MCXV\PaymentAdapter\DTO\CryptoInvoiceDTO;
 use MCXV\PaymentAdapter\DTO\CryptoCurrencyDTO;
+use MCXV\PaymentAdapter\Events\InvoiceCreated;
 
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
@@ -329,7 +330,9 @@ class CoinPaymentDriver implements PaymentGatewayInterface
         
         $createdInvoice = $this->getInvoiceById($data['invoices'][0]['id']);
         
-        // TODO: Broadcast the invoice created event 
+        // Broadcast the invoice created event 
+        event(new InvoiceCreated($createdInvoice));
+        
 
         return $createdInvoice;
     }
