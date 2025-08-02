@@ -16,6 +16,7 @@
  */
 
 namespace MCXV\PaymentAdapter\DTO;
+use MCXV\PaymentAdapter\DTO\CryptoCurrencyDTO;
 
 class CryptoInvoiceDTO
 {
@@ -37,9 +38,9 @@ class CryptoInvoiceDTO
     /**
      * Currency of the invoice.
      *
-     * @var string
+     * @var CryptoCurrencyDTO
      */
-    public string $currency;
+    public CryptoCurrencyDTO $currency;
 
     /**
      * Status of the invoice.
@@ -50,18 +51,18 @@ class CryptoInvoiceDTO
     public string $status;
 
     /**
-     * Network used for the cryptocurrency payment.
-     *
-     * @var string
-     */
-    public string $cryptoNetwork;
-
-    /**
      * Cryptocurrency address for the payment.
      *
      * @var string
      */
     public string $cryptoAddress;
+
+    /**
+     * Expiration time of the invoice in UNIX format.
+     *
+     * @var string
+     */
+    public int $expirationTime;
     
     /**
      * Description of the invoice.
@@ -91,25 +92,31 @@ class CryptoInvoiceDTO
      */
     public ?string $successUrl;
 
+    // Define status constants
+    public const STATUS_PENDING = 'PENDING';
+    public const STATUS_PARTIAL_FULFILLED = 'PARTIAL_FULFILLED';
+    public const STATUS_FULFILLED = 'FULFILLED';
+    public const STATUS_SUCCESSED = 'SUCCESSED';
+    public const STATUS_EXPIRED = 'EXPIRED';   
 
     public function __construct(
-        public string $id,
-        public string $amount,
-        public string $currency,
-        public string $status,
-        public string $cryptoNetwork,
-        public string $cryptoAddress,
-        public ?string $description = null,
-        public ?string $callbackUrl = null,
-        public ?string $cancelUrl = null,
-        public ?string $successUrl = null
+        string $id,
+        string $amount,
+        CryptoCurrencyDTO $currency,
+        string $status,        
+        string $cryptoAddress,
+        int $expirationTime,
+        string $description = null,
+        string $callbackUrl = null,
+        string $cancelUrl = null,
+        string $successUrl = null
     ) { 
         $this->id = $id;
         $this->amount = $amount;
         $this->currency = $currency;
-        $this->status = $status;
-        $this->cryptoNetwork = $cryptoNetwork;
+        $this->status = $status;        
         $this->cryptoAddress = $cryptoAddress;
+        $this->expirationTime = $expirationTime;
         $this->description = $description ?? '';
         $this->callbackUrl = $callbackUrl ?? '';
         $this->cancelUrl = $cancelUrl ?? '';

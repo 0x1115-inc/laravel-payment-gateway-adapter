@@ -18,8 +18,10 @@
 namespace MCXV\PaymentAdapter\Drivers;
 use MCXV\PaymentAdapter\Contracts\PaymentGatewayInterface;
 use MCXV\PaymentAdapter\DTO\CryptoInvoiceDTO;
+use MCXV\PaymentAdapter\DTO\CryptoCurrencyDTO;
 
 use Illuminate\Support\Facades\Http;
+use Carbon\Carbon;
 
 class CoinPaymentDriver implements PaymentGatewayInterface
 {
@@ -49,14 +51,15 @@ class CoinPaymentDriver implements PaymentGatewayInterface
         // - Timestamp (UTC ISO-8601 YYYY-MM-DDTHH:mm:ss)
         // - Request payload (JSON)
         $messageParts = [
-            "\xEF\xBB\xBF",
+            "\u{feff}", // Byte Order Mark
             $data['method'],
             $data['url'],
             $this->config['client_id'],
             $currentTimestamp,
-            json_encode($data['payload']),
-        ]
-
+            // If payload is provided, include it as a JSON string            
+            isset($data['payload']) ? json_encode($data['payload']) : '',            
+        ];
+        
         // Base64 encode the resulting SHA-256 hash.        
         $signature = hash_hmac(
             'sha256', 
@@ -66,17 +69,69 @@ class CoinPaymentDriver implements PaymentGatewayInterface
         );
 
 
-        $return [
+        return [
+            'messenger' => $messageParts,
             // The integration client id
-            'X-CoinPayments-Client': $this->config['client_id'],
+            'X-CoinPayments-Client' => $this->config['client_id'],
             
             // The current timestamp in UTC ISO-8601 format (YYYY-MM-DDTHH:mm:ss)
-            'X-CoinPayments-Timestamp': $currentTimestamp
+            'X-CoinPayments-Timestamp' => $currentTimestamp,
 
             // The signature of the request, generated using the secret key
-            'X-CoinPayments-Signature': base64_encode($signature),
-        ]
+            'X-CoinPayments-Signature' => base64_encode($signature),
+        ];        
+    }
+
+    private function _statusMapping(string $status): string
+    {
+        // Coin Payment avaiable statuses
+        // Enum: draft, scheduled, unpaid, pending, paid, completed, cancelled, timedOut, deleted
+
+        switch ($status) {
+            case 'draft':
+                return CryptoInvoiceDTO::STATUS_PENDING;
+            case 'scheduled':
+                return CryptoInvoiceDTO::STATUS_PENDING;
+            case 'unpaid':
+                return CryptoInvoiceDTO::STATUS_PENDING;
+            case 'pending':
+                return CryptoInvoiceDTO::STATUS_PENDING;
+            case 'paid':
+                return CryptoInvoiceDTO::STATUS_FULFILLED;
+            case 'completed':
+                return CryptoInvoiceDTO::STATUS_SUCCESSED;
+            case 'cancelled':
+                return CryptoInvoiceDTO::STATUS_EXPIRED;
+            case 'timedOut':
+                return CryptoInvoiceDTO::STATUS_EXPIRED;
+            case 'deleted':
+                return CryptoInvoiceDTO::STATUS_EXPIRED;
+            default:
+                return CryptoInvoiceDTO::STATUS_PENDING; // Default to pending if unknown
+        }
+    }
+
+    private function _currencyMapping(string $currencyId): CryptoCurrencyDTO
+    {
+        // Map Coin Payment currency to CryptoCurrency DTO
+        switch ($currencyId) {
+            case '1':
+                return new CryptoCurrencyDTO('Bitcoin', 'BTC', CryptoCurrencyDTO::NETWORK_BITCOIN);
+            case '4':
+                return new CryptoCurrencyDTO('Ethereum', 'ETH', CryptoCurrencyDTO::NETWORK_ETHEREUM);            
+            case '35:0x55d398326f99059ff775485246999027b3197955':
+                return new CryptoCurrencyDTO('Tether USD', 'USDT', CryptoCurrencyDTO::NETWORK_BCS);
+            case '9:TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t':
+                return new CryptoCurrencyDTO('Tether USD', 'USDT', CryptoCurrencyDTO::NETWORK_TRON);
+            case '4:0xdac17f958d2ee523a2206206994597c13d831ec7':
+                return new CryptoCurrencyDTO('Tether USD', 'USDT', CryptoCurrencyDTO::NETWORK_ETHEREUM);
+            case '1002':
+                return new CryptoCurrencyDTO('Litecoin Test', 'LTCT', 'litecoin-test');
+            default:
+                // Handle unknown currency
+                return new CryptoCurrencyDTO('Unknown', $currencyId, 'unknown');
         
+        }
     }
 
     /**
@@ -88,25 +143,33 @@ class CoinPaymentDriver implements PaymentGatewayInterface
      
     public function getInvoices(array $filters): array
     {        
-        $url = 'https://a-api.coinpayments.net/api/v2/merchant/invoices'
-
+        $url = 'https://a-api.coinpayments.net/api/v2/merchant/invoices';
+        
         $response = Http::withHeaders($this->__header([
             'method' => 'GET',
-            'url' => $url,
-            'payload' => $filters,
+            'url' => $url            
         ]))->get($url, $filters);
 
         // Handle request failure
-        if ($response->failed()) {
+        if ($response->failed()) {            
             throw new \Exception('Failed to retrieve invoices: ' . $response->body());
         }
 
         // Parse the response data
-        $data = $response->json();
-        if (!isset($data['data']) || !is_array($data['data'])) {
-            throw new \Exception('Invalid response format: ' . $response->body());
+        $data = $response->json();        
+        foreach($data['items'] as $invoiceData) {            
+            $invoices[] = new CryptoInvoiceDTO(
+                $invoiceData['id'],
+                $invoiceData['amount']['total'],
+                $this->_currencyMapping($invoiceData['currency']['id']),
+                $this->_statusMapping($invoiceData['status']),                
+                'payment-address',
+                Carbon::parse($invoiceData['dueDate'])->unix(),
+                $invoiceData['notes'] ?? null // Description                
+            );
         }
-        $invoices = [];
+        
+        dd($invoices);
 
         // TODO: Implement logic to convert response data to CryptoInvoiceDTO objects
 
