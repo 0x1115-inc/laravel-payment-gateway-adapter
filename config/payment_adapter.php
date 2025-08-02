@@ -54,8 +54,51 @@ return [
         'coinpayment' => [
             'environment' => env('COINPAYMENT_ENVIRONMENT', 'sandbox'), // 'sandbox' or 'production'
             'client_id' => env('COINPAYMENT_CLIENT_ID', ''),
-            'client_secret' => env('COINPAYMENT_CLIENT_SECRET', ''),            
+            'client_secret' => env('COINPAYMENT_CLIENT_SECRET', ''),
+            'refund_email' => env('COINPAYMENT_REFUND_EMAIL', 'john@example.com')
         ]
+    ],
+
+    /*
+    |----------------------------------------------------------------------
+    | Currency Acceptable
+    |----------------------------------------------------------------------
+    |
+    | This option controls the acceptable currencies for payments.
+    | You can specify multiple currencies as an array.
+    |
+    */
+    'currencies' => [
+        '1' => [
+            'name' => 'Bitcoin',
+            'symbol' => 'BTC',
+            'network' => 'Bicoin',
+        ],
+        '2' => [
+            'name' => 'Ethereum',
+            'symbol' => 'ETH',
+            'network' => 'Ethereum',
+        ],
+        '3' => [
+            'name' => 'USDT (BSC)',
+            'symbol' => 'USDT',
+            'network' => 'Binance Smart Chain',
+        ], 
+        '4' => [
+            'name' => 'USDT (TRC20)',
+            'symbol' => 'USDT',
+            'network' => 'Tron',
+        ],
+        '5' => [
+            'name' => 'USDT (ERC20)',
+            'symbol' => 'USDT',
+            'network' => 'Ethereum',
+        ],
+        't6' => [
+            'name' => 'Litecoin Testnet',
+            'symbol' => 'LTC',
+            'network' => 'Litecoin',
+        ],
     ]
     
     

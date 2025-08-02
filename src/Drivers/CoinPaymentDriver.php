@@ -25,6 +25,15 @@ use Carbon\Carbon;
 
 class CoinPaymentDriver implements PaymentGatewayInterface
 {
+    private $_currencyMapping = [
+        '1' => '1', // Bitcoin
+        '4' => '2', // Ethereum
+        '35:0x55d398326f99059ff775485246999027b3197955' => '3', // Tether USD on BSC
+        '9:TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t' => '4', // Tether USD on TRON
+        '4:0xdac17f958d2ee523a2206206994597c13d831ec7' => '5', // Tether USD on Ethereum
+        '1002' => 't6', // Litecoin Test
+    ];
+
     protected $config;
 
 
@@ -110,28 +119,6 @@ class CoinPaymentDriver implements PaymentGatewayInterface
         }
     }
 
-    private function _currencyMapping(string $currencyId): CryptoCurrencyDTO
-    {
-        // Map Coin Payment currency to CryptoCurrency DTO
-        switch ($currencyId) {
-            case '1':
-                return new CryptoCurrencyDTO('Bitcoin', 'BTC', CryptoCurrencyDTO::NETWORK_BITCOIN);
-            case '4':
-                return new CryptoCurrencyDTO('Ethereum', 'ETH', CryptoCurrencyDTO::NETWORK_ETHEREUM);            
-            case '35:0x55d398326f99059ff775485246999027b3197955':
-                return new CryptoCurrencyDTO('Tether USD', 'USDT', CryptoCurrencyDTO::NETWORK_BCS);
-            case '9:TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t':
-                return new CryptoCurrencyDTO('Tether USD', 'USDT', CryptoCurrencyDTO::NETWORK_TRON);
-            case '4:0xdac17f958d2ee523a2206206994597c13d831ec7':
-                return new CryptoCurrencyDTO('Tether USD', 'USDT', CryptoCurrencyDTO::NETWORK_ETHEREUM);
-            case '1002':
-                return new CryptoCurrencyDTO('Litecoin Test', 'LTCT', 'litecoin-test');
-            default:
-                // Handle unknown currency
-                return new CryptoCurrencyDTO('Unknown', $currencyId, 'unknown');
-        
-        }
-    }
 
     /**
      * Get the payment address for a specific invoice.
@@ -191,12 +178,12 @@ class CoinPaymentDriver implements PaymentGatewayInterface
         }
 
         // Parse the response data
-        $data = $response->json();        
+        $data = $response->json();            
         foreach($data['items'] as $invoiceData) {            
             $invoices[] = new CryptoInvoiceDTO(
                 $invoiceData['id'],
                 $invoiceData['amount']['total'],
-                $this->_currencyMapping($invoiceData['currency']['id']),
+                new CryptoCurrencyDTO($this->_currencyMapping[$invoiceData['currency']['id']] ?? null),
                 $this->_statusMapping($invoiceData['status']),                
                 $this->_getPaymentAddress($invoiceData['id'], $invoiceData['currency']['id']),
                 Carbon::parse($invoiceData['dueDate'])->unix(),
@@ -239,7 +226,7 @@ class CoinPaymentDriver implements PaymentGatewayInterface
         $invoice = new CryptoInvoiceDTO(
             $data['id'],
             $data['amount']['total'],
-            $this->_currencyMapping($data['currency']['id']),
+            new CryptoCurrencyDTO($this->_currencyMapping[$data['currency']['id']] ?? null),
             $this->_statusMapping($data['status']),
             $this->_getPaymentAddress($data['id'], $data['currency']['id']),
             Carbon::parse($data['dueDate'])->unix(),
@@ -258,11 +245,71 @@ class CoinPaymentDriver implements PaymentGatewayInterface
     public function createInvoice(CryptoInvoiceDTO $invoice): CryptoInvoiceDTO
     {
         $url = 'https://a-api.coinpayments.net/api/v2/merchant/invoices';
-        
-        $payload = [
-            // TODO: Prepare the payload for the request
-        ];
 
+        $paymentCurrency = '' . array_flip($this->_currencyMapping)[$invoice->currency->id] ?? null;
+        // datetime format
+
+        $payload = [
+            'currency' => $paymentCurrency,
+            'items' => [
+                [                    
+                    'name' => 'Invoice #' . $invoice->getId() ,
+                    'quantity' => [
+                        'value' => 1,
+                        'type' => 'quantity'
+                    ], 
+                    'amount' => $invoice->getAmount(),
+                    // Optional fields
+                    // 'customId' => $invoice->getId(), // Custom ID for the invoice
+                    // 'sku' => $invoice->getId(), // SKU for the invoice
+                    // 'description' => $invoice->getDescription() ?? 'Invoice #' . $invoice->getId(),
+                    // 'originalAmount' => $invoice->getAmount(), // Original amount of the invoice
+                    // 'tax' => 0, // Set tax to 0 if not applicable
+                ],
+            ],
+            'amount' => [
+                'breakdown' => [
+                    'subtotal' => $invoice->getAmount(),
+                    // Optional fields
+                    // 'shipping' => 0, // Set tax to 0 if not applicable          
+                    // 'taxTotal' => 0, // Set tax to 0 if not applicable
+                    // 'handling' => 0, // Set handling to 0 if not applicable
+                    // 'discount' => 0, // Set discount to 0 if not applicable
+                ],
+                'total' => $invoice->getAmount(), // Total amount of the invoice
+            ],
+            'isEmailDelivery' => false, // Whether to send invoice via email
+            'emailDelivery' => null, // Set the email address for delivery if needed            
+            'buyer' => null,
+            // 'buyer' => [
+            //     'name' => [
+            //         'firstName' => 'Duog',
+            //         'lastName' => 'Lee',
+            //     ],
+            //     'address' => [
+            //         'address1' => $invoice->getBuyerAddress1() ?? 'Unknown',
+            //         'city' => $invoice->getBuyerCity() ?? 'Unknown',
+            //         'provinOrState' => $invoice->getBuyerProvinceOrState() ?? 'Unknown',
+            //         'countryCode' => $invoice->getBuyerCountryCode() ?? 'Unknown',
+            //         'postalCode' => $invoice->getBuyerPostalCode() ?? 'Unknown',
+            //     ],
+            //     'hasData' => false, // Indicates that buyer data is provided
+            // ],
+            'shipping' => null,
+            'merchantOptions' => [
+                'showAddress' => false, // Indicates whether the address should be shown on the invoice. Default is don't show if not provided.
+                'showEmail' => false, // indicates whether the email should be shown on the invoice. Default is show the email if not provided.
+                'showPhone' => false, // Indicates whether the phone should be shown on the invoice. Default is don't show if not provided.
+                'showRegistrationNumber' => false, // Indicates whether the registration number should be shown on the invoice. Default is don't show if not provided.
+                'showTaxId' => false, // Indicates whether the tax number should be shown on the invoice. Default is don't show if not provided.            
+            ],
+            'payment' => [
+                'paymentCurrency' => $paymentCurrency, // The currency in which the payment will be made
+                'refundEmail' => $this->config['refund_email'], // Optional refund email address
+            ],
+            'hideShoppingCart' => true, // Indicates whether the shopping cart should be hidden on the invoice. Default is don't hide if not provided.
+        ];
+        
         $response = Http::withHeaders($this->__header([
             'method' => 'POST',
             'url' => $url,
@@ -276,16 +323,15 @@ class CoinPaymentDriver implements PaymentGatewayInterface
 
         // Parse the response data
         $data = $response->json();
-        if (!isset($data['data'])) {
+        if (!isset($data) || count($data['invoices']) == 0) {
             throw new \Exception('Failed to create invoice: ' . $response->body());
         }
-
-        // TODO: Handle the response data and convert it to CryptoInvoiceDTO
-        $invoice = new CryptoInvoiceDTO();        
-
+        
+        $createdInvoice = $this->getInvoiceById($data['invoices'][0]['id']);
+        
         // TODO: Broadcast the invoice created event 
 
-        return $invoice;
+        return $createdInvoice;
     }
 
 

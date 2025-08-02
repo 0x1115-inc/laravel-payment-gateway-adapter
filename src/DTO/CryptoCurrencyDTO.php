@@ -19,11 +19,14 @@ namespace MCXV\PaymentAdapter\DTO;
 
 class CryptoCurrencyDTO
 {
-    public const NETWORK_BITCOIN = 'bitcoin';
-    public const NETWORK_ETHEREUM = 'ethereum';
-    public const NETWORK_TRON = 'tron';
-    public const NETWORK_BSC = 'bsc';
-    
+  
+    /**
+     * Unique identifier for the cryptocurrency.
+     *
+     * @var string
+     */
+    public string $id;
+
     /**
      * Name of the cryptocurrency.
      *
@@ -53,10 +56,19 @@ class CryptoCurrencyDTO
      * @param string $symbol
      * @param string $network
      */
-    public function __construct(string $name, string $symbol, string $network)
+    public function __construct(string $id)
     {        
-        $this->name = $name;
-        $this->symbol = $symbol;
-        $this->network = $network;
+        $this->id = $id;                
+        $currency = config('payment_adapter.currencies')[$id] ?? null;
+        if ($currency) {
+            $this->name = $currency['name'] ?? '';
+            $this->symbol = $currency['symbol'] ?? '';
+            $this->network = $currency['network'] ?? '';
+        } else {
+            $this->name = 'Unsupported';
+            $this->symbol = 'Unsupported';
+            $this->network = 'Unsupported';
+        }
     }
+
 }
