@@ -26,7 +26,7 @@ return [
     |    
     */
     
-    'default' => env('PAYMENT_ADAPTER_DEFAULT', 'cpg'),
+    'default' => env('PAYMENT_ADAPTER_PROVIDER', 'cpg'),
 
     /*
     |----------------------------------------------------------------------
@@ -56,4 +56,6 @@ return [
             'client_secret' => env('COINPAYMENT_CLIENT_SECRET', ''),            
         ]
     ]
+    
+    
 ];
