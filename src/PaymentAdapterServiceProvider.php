@@ -42,7 +42,7 @@ class PaymentAdapterServiceProvider extends ServiceProvider
             'payment_adapter'
         );
         
-        $this->app->singleton('payment.adapter', function ($app) {            
+        $this->app->singleton('payment-adapter', function ($app) {            
             return new PaymentAdapterManager($app);
         });
     }
