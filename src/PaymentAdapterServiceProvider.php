@@ -19,8 +19,6 @@ namespace MCXV\PaymentAdapter;
 
 use Illuminate\Support\ServiceProvider;
 
-use MCXV\PaymentAdapter\PaymentAdapterManager;
-
 class PaymentAdapterServiceProvider extends ServiceProvider
 {
     /**
@@ -33,7 +31,7 @@ class PaymentAdapterServiceProvider extends ServiceProvider
         $this->loadRoutesFrom(__DIR__ . '/../routes/webhook.php');
         $this->publishes([
             __DIR__ . '/../config/payment_adapter.php' => config_path('payment_adapter.php')
-        ]);
+        ], 'config');
     }
 
     public function register()
@@ -43,7 +41,7 @@ class PaymentAdapterServiceProvider extends ServiceProvider
             'payment_adapter'
         );
         
-        $this->app->singleton('payment-adapter', function ($app) {            
+        $this->app->singleton(PaymentAdapterManager::class, function ($app) {            
             return new PaymentAdapterManager($app);
         });
     }
