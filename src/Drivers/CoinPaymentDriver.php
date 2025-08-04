@@ -337,7 +337,82 @@ class CoinPaymentDriver implements PaymentGatewayInterface
         return $createdInvoice;
     }
 
+    /**
+     * Handle a webhook request from the payment provider.
+     *
+     * @param Request $request
+     * @return CryptoInvoiceDTO
+     */
+    public function handleWebhook(\Illuminate\Http\Request $request): CryptoInvoiceDTO
+    {
+        // Validate the request signature
+        $signature = $request->header('X-CoinPayments-Signature');
+        if (!$signature) {
+            throw new \Exception('Missing signature in request header');
+        }
 
+        // Verify the signature
+        $expectedSignature = base64_encode(
+            hash_hmac(
+                'sha256',
+                "\u{feff}" . $request->method() . $request->fullUrl() . 
+                $this->config['client_id'] . now()->toIso8601String() . 
+                $request->getContent(),
+                $this->config['client_secret'],
+                true
+            )
+        );
 
+        if ($signature !== $expectedSignature) {
+            throw new \Exception('Invalid signature in request header');
+        }
+
+        // Parse the request data
+        $data = $request->json();
+
+        // The coinpayments support following event types
+        // - InvoiceCreated
+        // - InvoicePending
+        // - InvoicePaid
+        // - InvoiceCompleted
+        // - InvoiceCancelled
+        // - InvoiceTimedOut
+        // - PaymentCreated
+        // - PaymentTimedOut
+        // Reference: https://a-docs.coinpayments.net/api/webhooks/clients
+        // We will handle only InvoiceCreated, Invoice Completed, InvoiceCancelled and InvoiceTimedOut events
+
+        $invoice = new CryptoInvoiceDTO(
+            $data['invoice']['id']
+            $data['invoice']['amount']['total'],
+            null,
+            $this->_statusMapping(strtolower($data['invoice']['state'])),
+            '',
+            Carbon::parse($data['dueDate'])->unix(),
+            $data['notes'] ?? null // Description
+        );
+
+        switch (strtolower($data['type'])) {
+            case 'invoicecreated':
+                event(new InvoiceCreated($invoice));
+                break;
+            case 'invoicecompleted':
+                event(new InvoiceCompleted($invoice));
+                break;
+            case 'invoicecancelled':
+                event(new InvoiceCancelled($invoice));                
+                break;
+            case 'invoicetimedout':
+                event(new InvoiceTimedOut($invoice));            
+                break;
+            default:
+                \Log::info('Unhandled CryptoPayment webhook event type: ' . $data['type'], [
+                    'invoice_id' => $data['invoice']['id'],
+                    'event_id' => $data['id'],
+                ]);        
+        }
+        
+        return $invoice;
+    }
     
 }
