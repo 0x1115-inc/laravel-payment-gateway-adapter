@@ -30,6 +30,7 @@ class PaymentAdapterServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        $this->loadRoutesFrom(__DIR__ . '/../routes/webhook.php');
         $this->publishes([
             __DIR__ . '/../config/payment_adapter.php' => config_path('payment_adapter.php')
         ]);
