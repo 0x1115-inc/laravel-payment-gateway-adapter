@@ -27,8 +27,8 @@ use Illuminate\Queue\SerializesModels;
 
 use MCXV\PaymentAdapter\DTO\CryptoInvoiceDTO;
 
- class InvoiceCreated 
- {
+class InvoiceCancelled
+{
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public CryptoInvoiceDTO $invoice;
@@ -47,4 +47,4 @@ use MCXV\PaymentAdapter\DTO\CryptoInvoiceDTO;
             new PrivateChannel('payment-adapter')
         ];
     }
- }
+}
