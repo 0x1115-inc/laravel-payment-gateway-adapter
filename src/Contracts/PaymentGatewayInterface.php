@@ -16,7 +16,10 @@
  */
 
 namespace MCXV\PaymentAdapter\Contracts;
+use Illuminate\Http\Request;
+
 use MCXV\PaymentAdapter\DTO\CryptoInvoiceDTO;
+
 
 interface PaymentGatewayInterface
 {
@@ -42,4 +45,12 @@ interface PaymentGatewayInterface
      * @return CryptoInvoiceDTO
      */
     public function createInvoice(CryptoInvoiceDTO $invoice): CryptoInvoiceDTO;
+
+    /**
+     * Handle a webhook request from the payment provider.
+     *
+     * @param Request $request
+     * @return CryptoInvoiceDTO
+     */
+    public function handleWebhook(Request $request): CryptoInvoiceDTO;
 }
