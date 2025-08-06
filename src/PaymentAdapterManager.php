@@ -47,11 +47,11 @@ class PaymentAdapterManager extends Manager
         return new Drivers\CpgDriver($config);
     }
 
-    protected function createCoinPaymentDriver(): PaymentGatewayInterface
+    protected function createCoinPaymentsDriver(): PaymentGatewayInterface
     {
-        $config = $this->config->get('payment_adapter.drivers.coinpayment');
+        $config = $this->config->get('payment_adapter.drivers.coinpayments');
 
-        return new Drivers\CoinPaymentDriver($config);
+        return new Drivers\CoinPaymentsDriver($config);
     }
 
     public function extendDriver(string $name, callable $factory): void

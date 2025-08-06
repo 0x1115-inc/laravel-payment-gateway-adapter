@@ -24,7 +24,7 @@ use MCXV\PaymentAdapter\Events\InvoiceCreated;
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
 
-class CoinPaymentDriver implements PaymentGatewayInterface
+class CoinPaymentsDriver implements PaymentGatewayInterface
 {
     private $_currencyMapping = [
         '1' => '1', // Bitcoin
@@ -351,22 +351,25 @@ class CoinPaymentDriver implements PaymentGatewayInterface
             throw new \Exception('Missing signature in request header');
         }
 
+        $requestTimestamp = $request->header('X-CoinPayments-Timestamp');
+        $url = $request->fullUrl();        
+        
         // Verify the signature
         $expectedSignature = base64_encode(
             hash_hmac(
                 'sha256',
-                "\u{feff}" . $request->method() . $request->fullUrl() . 
-                $this->config['client_id'] . now()->toIso8601String() . 
+                "\u{feff}" . $request->method() . $url . 
+                $this->config['client_id'] . $requestTimestamp . 
                 $request->getContent(),
                 $this->config['client_secret'],
                 true
             )
-        );
-
+        );     
+        
         if ($signature !== $expectedSignature) {
             throw new \Exception('Invalid signature in request header');
         }
-
+        
         // Parse the request data
         $data = $request->json();
 
@@ -383,7 +386,7 @@ class CoinPaymentDriver implements PaymentGatewayInterface
         // We will handle only InvoiceCreated, Invoice Completed, InvoiceCancelled and InvoiceTimedOut events
 
         $invoice = new CryptoInvoiceDTO(
-            $data['invoice']['id']
+            $data['invoice']['id'],
             $data['invoice']['amount']['total'],
             null,
             $this->_statusMapping(strtolower($data['invoice']['state'])),
