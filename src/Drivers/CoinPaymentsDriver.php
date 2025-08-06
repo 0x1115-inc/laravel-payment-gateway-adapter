@@ -20,6 +20,10 @@ use MCXV\PaymentAdapter\Contracts\PaymentGatewayInterface;
 use MCXV\PaymentAdapter\DTO\CryptoInvoiceDTO;
 use MCXV\PaymentAdapter\DTO\CryptoCurrencyDTO;
 use MCXV\PaymentAdapter\Events\InvoiceCreated;
+use MCXV\PaymentAdapter\Events\InvoiceFulfilled;
+use MCXV\PaymentAdapter\Events\InvoiceCompleted;
+use MCXV\PaymentAdapter\Events\InvoiceCancelled;
+use MCXV\PaymentAdapter\Events\InvoiceTimedOut;
 
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
@@ -400,6 +404,9 @@ class CoinPaymentsDriver implements PaymentGatewayInterface
         switch (strtolower($data['type'])) {
             case 'invoicecreated':
                 event(new InvoiceCreated($invoice));
+                break;
+            case 'invoicepaid':
+                event(new InvoiceFulfilled($invoice));
                 break;
             case 'invoicecompleted':
                 event(new InvoiceCompleted($invoice));
