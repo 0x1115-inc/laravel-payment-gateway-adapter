@@ -72,34 +72,63 @@ return [
         '1' => [
             'name' => 'Bitcoin',
             'symbol' => 'BTC',
-            'network' => 'Bicoin',
+            'network' => 'Bitcoin',
+            'decimal_places' => 8,
         ],
         '2' => [
             'name' => 'Ethereum',
             'symbol' => 'ETH',
             'network' => 'Ethereum',
+            'decimal_places' => 18,
         ],
         '3' => [
             'name' => 'USDT (BSC)',
             'symbol' => 'USDT',
             'network' => 'Binance Smart Chain',
+            'decimal_places' => 18,
         ], 
         '4' => [
             'name' => 'USDT (TRC20)',
             'symbol' => 'USDT',
             'network' => 'Tron',
+            'decimal_places' => 6,
         ],
         '5' => [
             'name' => 'USDT (ERC20)',
             'symbol' => 'USDT',
             'network' => 'Ethereum',
+            'decimal_places' => 18,
         ],
         't6' => [
             'name' => 'Litecoin Testnet',
             'symbol' => 'LTC',
-            'network' => 'Litecoin',
+            'network' => 'Litecoin CryptoPayments Testnet',
+            'decimal_places' => 8,
         ],
-    ]
+    ],
+
+    /*
+    |----------------------------------------------------------------------
+    | Default Currency
+    |----------------------------------------------------------------------
+    |
+    | This option controls the default currency that will be used for
+    | transactions. It should match one of the currencies defined above.
+    |
+    */
+
+    'default_currency' => env('PAYMENT_ADAPTER_DEFAULT_CURRENCY', 'USDT'),
     
-    
+    /*
+    |----------------------------------------------------------------------
+    | Payment Window Timeout
+    |----------------------------------------------------------------------
+    |
+    | This option controls the timeout for payment windows. If a payment
+    | is not completed within this time, it will be considered expired.
+    | The value is in minutes.
+    |
+    */
+
+    'window_timeout' => env('PAYMENT_ADAPTER_WINDOW_TIMEOUT', 15), // in minutes
 ];
