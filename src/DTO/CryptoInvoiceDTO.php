@@ -131,5 +131,16 @@ class CryptoInvoiceDTO
     public function getAmount()
     {
         return $this->amount;
-    }    
+    }
+
+    public function getCryptoAddress() : string
+    {
+        return $this->cryptoAddress;
+    }
+
+    public function getCurrency() : CryptoCurrencyDTO
+    {
+        return $this->currency;
+    }
+
 }
