@@ -27,6 +27,12 @@ use Illuminate\Queue\SerializesModels;
 
 use MCXV\PaymentAdapter\DTO\CryptoInvoiceDTO;
 
+/**
+ * Handle the compeletion invoice process at gateway.
+ * This evenet is trigggered when the amount of the invoice is 
+ * ready to be withdrawn by the merchant.
+ */
+
 class InvoiceCompleted
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;

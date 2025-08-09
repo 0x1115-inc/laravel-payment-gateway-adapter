@@ -27,6 +27,8 @@ use Illuminate\Queue\SerializesModels;
 
 use MCXV\PaymentAdapter\DTO\CryptoInvoiceDTO;
 
+
+
 class InvoiceTimedOut
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;

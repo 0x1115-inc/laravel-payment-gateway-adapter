@@ -27,6 +27,18 @@ use Illuminate\Queue\SerializesModels;
 
 use MCXV\PaymentAdapter\DTO\CryptoInvoiceDTO;
 
+/**
+ * Handles the invoice fulfillment process when sufficient payment amount is received
+ * and confirmation is obtained.
+ * 
+ * This method processes an invoice that has received adequate payment and proper
+ * confirmation, marking it as fulfilled and completing the transaction workflow.
+ * 
+ * @param float $amount The payment amount received
+ * @param bool $confirmation Whether the payment has been confirmed
+ * @return bool Returns true if invoice is successfully fulfilled, false otherwise
+ */
+
 class InvoiceFulfilled
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
