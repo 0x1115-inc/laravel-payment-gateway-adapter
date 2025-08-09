@@ -379,6 +379,7 @@ class CoinPaymentsDriver implements PaymentGatewayInterface
 
         // The coinpayments support following event types
         // - InvoiceCreated
+        // - InvoicePaymentCreated
         // - InvoicePending
         // - InvoicePaid
         // - InvoiceCompleted
@@ -386,6 +387,7 @@ class CoinPaymentsDriver implements PaymentGatewayInterface
         // - InvoiceTimedOut
         // - PaymentCreated
         // - PaymentTimedOut
+        // - InvoicePaymentTimedOut
         // Reference: https://a-docs.coinpayments.net/api/webhooks/clients
         // We will handle only InvoiceCreated, Invoice Completed, InvoiceCancelled and InvoiceTimedOut events        
 
@@ -403,6 +405,7 @@ class CoinPaymentsDriver implements PaymentGatewayInterface
 
         switch (strtolower($data['type'])) {
             case 'invoicecreated':
+            case 'invoicepaymentcreated':
                 event(new InvoiceCreated($invoice));
                 break;
             case 'invoicepaid':
@@ -415,6 +418,7 @@ class CoinPaymentsDriver implements PaymentGatewayInterface
                 event(new InvoiceCancelled($invoice));                
                 break;
             case 'invoicetimedout':
+            case 'invoicepaymenttimedout':
                 event(new InvoiceTimedOut($invoice));            
                 break;
             default:
