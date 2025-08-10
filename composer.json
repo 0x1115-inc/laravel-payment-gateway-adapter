@@ -1,5 +1,5 @@
 {
-    "name": "mcxv/laravel-payment-adapter",
+    "name": "mcxv/laravel-payment-gateway-adapter",
     "description": "Laravel payment adapter for various payment gateways",
     "license": "Apache 2.0",
     "authors": [
