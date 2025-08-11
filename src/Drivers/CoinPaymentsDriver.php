@@ -263,43 +263,18 @@ class CoinPaymentsDriver implements PaymentGatewayInterface
                         'value' => 1,
                         'type' => 'quantity'
                     ], 
-                    'amount' => $invoice->getAmount(),
-                    // Optional fields
-                    // 'customId' => $invoice->getId(), // Custom ID for the invoice
-                    // 'sku' => $invoice->getId(), // SKU for the invoice
-                    // 'description' => $invoice->getDescription() ?? 'Invoice #' . $invoice->getId(),
-                    // 'originalAmount' => $invoice->getAmount(), // Original amount of the invoice
-                    // 'tax' => 0, // Set tax to 0 if not applicable
+                    'amount' => $invoice->getAmount(),                                        
                 ],
             ],
             'amount' => [
                 'breakdown' => [
-                    'subtotal' => $invoice->getAmount(),
-                    // Optional fields
-                    // 'shipping' => 0, // Set tax to 0 if not applicable          
-                    // 'taxTotal' => 0, // Set tax to 0 if not applicable
-                    // 'handling' => 0, // Set handling to 0 if not applicable
-                    // 'discount' => 0, // Set discount to 0 if not applicable
+                    'subtotal' => $invoice->getAmount(),                    
                 ],
                 'total' => $invoice->getAmount(), // Total amount of the invoice
             ],
             'isEmailDelivery' => false, // Whether to send invoice via email
             'emailDelivery' => null, // Set the email address for delivery if needed            
-            'buyer' => null,
-            // 'buyer' => [
-            //     'name' => [
-            //         'firstName' => 'Duog',
-            //         'lastName' => 'Lee',
-            //     ],
-            //     'address' => [
-            //         'address1' => $invoice->getBuyerAddress1() ?? 'Unknown',
-            //         'city' => $invoice->getBuyerCity() ?? 'Unknown',
-            //         'provinOrState' => $invoice->getBuyerProvinceOrState() ?? 'Unknown',
-            //         'countryCode' => $invoice->getBuyerCountryCode() ?? 'Unknown',
-            //         'postalCode' => $invoice->getBuyerPostalCode() ?? 'Unknown',
-            //     ],
-            //     'hasData' => false, // Indicates that buyer data is provided
-            // ],
+            'buyer' => null,            
             'shipping' => null,
             'merchantOptions' => [
                 'showAddress' => false, // Indicates whether the address should be shown on the invoice. Default is don't show if not provided.
@@ -391,7 +366,7 @@ class CoinPaymentsDriver implements PaymentGatewayInterface
         // Reference: https://a-docs.coinpayments.net/api/webhooks/clients
         // We will handle only InvoiceCreated, Invoice Completed, InvoiceCancelled and InvoiceTimedOut events        
 
-        $currency = new CryptoCurrencyDTO(); // TODO: Implement currency mapping 
+        $currency = new CryptoCurrencyDTO(); 
 
         $invoice = new CryptoInvoiceDTO(
             $data['invoice']['id'],
