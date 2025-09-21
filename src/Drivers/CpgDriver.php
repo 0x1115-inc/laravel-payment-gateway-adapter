@@ -17,10 +17,11 @@
 
 namespace MCXV\PaymentAdapter\Drivers;
 use MCXV\PaymentAdapter\Contracts\PaymentGatewayInterface;
-use MCXV\PaymentAdapter\DTO\PaymentDTO;
+use MCXV\PaymentAdapter\DTO\CryptoInvoiceDTO;
 
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class CpgDriver implements PaymentGatewayInterface
 {
@@ -46,9 +47,9 @@ class CpgDriver implements PaymentGatewayInterface
     /**
      * Get list of all payments with optional filter.
      *
-     * @return PaymentDTO[]
+     * @return CryptoInvoiceDTO[]
      */
-    public function getPayments(array $filters): array
+    public function getInvoices(array $filters): array
     {
         // Call CPG API to retrieve payments
         $response = Http::withHeaders([
@@ -63,7 +64,7 @@ class CpgDriver implements PaymentGatewayInterface
         $paymentsData = $response->json();
         $payments = [];
         foreach ($paymentsData as $data) {
-            $payment = new PaymentDTO();
+            $payment = new CryptoInvoiceDTO();
             $payment->id = $data['paymentId'];
             $payment->amount = $data['amount'];
             $payment->currency = $data['currency'];
@@ -80,9 +81,9 @@ class CpgDriver implements PaymentGatewayInterface
      * Get a payment by its unique identifier.
      *
      * @param string $id
-     * @return PaymentDTO
+     * @return CryptoInvoiceDTO
      */
-    public function getPaymentById(string $id): PaymentDTO
+    public function getInvoiceById(string $id): CryptoInvoiceDTO
     {
         // Call CPG API to retrieve a specific payment by ID
         $response = Http::withHeaders([
@@ -92,7 +93,7 @@ class CpgDriver implements PaymentGatewayInterface
             throw new \Exception('Failed to retrieve payment: ' . $response->body());
         }
         $data = $response->json();
-        $payment = new PaymentDTO();
+        $payment = new CryptoInvoiceDTO();
         $payment->id = $data['paymentId'];
         $payment->amount = $data['amount'];
         $payment->currency = $data['currency'];
@@ -107,17 +108,17 @@ class CpgDriver implements PaymentGatewayInterface
     /**
      * Create a new payment with the provided data.
      *
-     * @param PaymentDTO $payment
-     * @return PaymentDTO
+     * @param CryptoInvoiceDTO $payment
+     * @return CryptoInvoiceDTO
      */
-    public function createPayment(PaymentDTO $payment): PaymentDTO
+    public function createInvoice(CryptoInvoiceDTO $payment): CryptoInvoiceDTO
     {
         $response = Http::withHeaders([
             'X-API-KEY' => $this->config['apikey'],
         ])->post($this->config['api_url'] . '/payments', [
             'amount' => $payment->amount,
-            'currency' => $payment->currency,
-            'network' => $payment->cryptoNetwork,
+            'currency' => $payment->currency->symbol,
+            'network' => $payment->currency->network,
             'description' => 'Payment for order #' . $payment->id,
             'callback_url' => 'https://yourdomain.com/api/payment/callback',
             'merchantOrderId' => $payment->id
@@ -128,19 +129,20 @@ class CpgDriver implements PaymentGatewayInterface
         }
         $data = $response->json();
 
-        $responsePaymentDTO = new PaymentDTO();
-        $responsePaymentDTO->id = $data['paymentId'];
-        $responsePaymentDTO->status = $this->statusMapping($data['status']);
-        $responsePaymentDTO->address = $data['receivingAddress'];
-        $responsePaymentDTO->expirationTime = Carbon::parse($data['expiresAt'])->timestamp;
-        $responsePaymentDTO->cryptoNetwork = $data['network'];
-        $responsePaymentDTO->currency = $data['currency'];
-        $responsePaymentDTO->amount = $data['amount'];        
-
+        // Clone invoice object
+        $responsePaymentDTO = new CryptoInvoiceDTO(
+            $data['paymentId'],
+            $data['amount'],
+            $payment->currency,
+            $this->statusMapping($data['status']),
+            $data['receivingAddress'],
+            Carbon::parse($data['expiresAt'])->timestamp
+        );
+        
         return $responsePaymentDTO;
     }
 
-    public function handleWebhook(Request $request): PaymentDTO
+    public function handleWebhook(Request $request): CryptoInvoiceDTO
     {
         $payload = $request->all();
         // Validate webhook signature if necessary
