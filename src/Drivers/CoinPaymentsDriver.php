@@ -391,7 +391,7 @@ class CoinPaymentsDriver implements PaymentGatewayInterface
         // Reference: https://a-docs.coinpayments.net/api/webhooks/clients
         // We will handle only InvoiceCreated, Invoice Completed, InvoiceCancelled and InvoiceTimedOut events        
 
-        $currency = new CryptoCurrencyDTO(); // TODO: Implement currency mapping 
+        $currency = new CryptoCurrencyDTO(); 
 
         $invoice = new CryptoInvoiceDTO(
             $data['invoice']['id'],
