@@ -31,6 +31,18 @@ class CpgDriver implements PaymentGatewayInterface
         $this->config = $config;
     }
 
+    private function statusMapping($status): string
+    {
+        $mapping = [
+            'PENDING' => 'PENDING',
+            'PARTIAL_FULFILLED' => 'PARTIAL_FULFILLED',
+            'FULFILLED' => 'FULFILLED',
+            'SUCCESSED' => 'SUCCESSED',
+            'EXPIRED' => 'EXPIRED'
+        ];
+        return $mapping[$status] ?? 'EXPIRED';
+    }
+
     /**
      * Get list of all payments with optional filter.
      *
@@ -40,7 +52,7 @@ class CpgDriver implements PaymentGatewayInterface
     {
         // Call CPG API to retrieve payments
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->config['api_key'],            
+            'X-API-KEY' => $this->config['apikey'],            
         ])->get($this->config['api_url'] . '/payments', [
             'filters' => $filters
         ]);
@@ -52,13 +64,13 @@ class CpgDriver implements PaymentGatewayInterface
         $payments = [];
         foreach ($paymentsData as $data) {
             $payment = new PaymentDTO();
-            $payment->id = $data['id'];
+            $payment->id = $data['paymentId'];
             $payment->amount = $data['amount'];
-            $payment->currency = $data['currency']['symbol'];
-            $payment->cryptoNetwork = $data['currency']['network'];
-            $payment->status = $data['status'];
-            $payment->address = $data['receive_address'];
-            $payment->expirationTime = Carbon::parse($data['payment_deadline'])->timestamp;
+            $payment->currency = $data['currency'];
+            $payment->cryptoNetwork = $data['networkType'];
+            $payment->status = $this->statusMapping($data['status']);
+            $payment->address = $data['receivingAddress'];
+            $payment->expirationTime = Carbon::parse($data['expiresAt'])->timestamp;
             $payments[] = $payment;
         }
         return $payments;
@@ -74,20 +86,20 @@ class CpgDriver implements PaymentGatewayInterface
     {
         // Call CPG API to retrieve a specific payment by ID
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->config['api_key'],            
+            'X-API-KEY' => $this->config['apikey'],
         ])->get($this->config['api_url'] . '/payments/' . $id);
         if ($response->failed()) {
             throw new \Exception('Failed to retrieve payment: ' . $response->body());
         }
         $data = $response->json();
         $payment = new PaymentDTO();
-        $payment->id = $data['id'];
+        $payment->id = $data['paymentId'];
         $payment->amount = $data['amount'];
-        $payment->currency = $data['currency']['symbol'];
-        $payment->cryptoNetwork = $data['currency']['network'];
-        $payment->status = $data['status'];
-        $payment->address = $data['receive_address'];
-        $payment->expirationTime = Carbon::parse($data['payment_deadline'])->timestamp;
+        $payment->currency = $data['currency'];
+        $payment->cryptoNetwork = $data['network'];
+        $payment->status = $this->statusMapping($data['status']);
+        $payment->address = $data['receivingAddress'];
+        $payment->expirationTime = Carbon::parse($data['expiresAt'])->timestamp;
         
         return $payment;
     }
@@ -101,26 +113,42 @@ class CpgDriver implements PaymentGatewayInterface
     public function createPayment(PaymentDTO $payment): PaymentDTO
     {
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->config['api_key'],            
+            'X-API-KEY' => $this->config['apikey'],
         ])->post($this->config['api_url'] . '/payments', [
             'amount' => $payment->amount,
-            'currency_symbol' => $payment->currency,
-            'currency_network' => $payment->cryptoNetwork,            
+            'currency' => $payment->currency,
+            'network' => $payment->cryptoNetwork,
+            'description' => 'Payment for order #' . $payment->id,
+            'callback_url' => 'https://yourdomain.com/api/payment/callback',
+            'merchantOrderId' => $payment->id
         ]);
         
         if ($response->failed()) {
             throw new \Exception('Failed to create payment: ' . $response->body());
         }
         $data = $response->json();
-        $payment->id = $data['id'];
-        $payment->status = $data['status'];
-        $payment->address = $data['receive_address'];
-        $payment->expirationTime = Carbon::parse($data['payment_deadline'])->timestamp;
-        $payment->cryptoNetwork = $data['currency']['network'];
-        $payment->currency = $data['currency']['symbol'];
-        $payment->amount = $data['amount'];
-        $payment->status = $data['status'];        
 
-        return $payment;
+        $responsePaymentDTO = new PaymentDTO();
+        $responsePaymentDTO->id = $data['paymentId'];
+        $responsePaymentDTO->status = $this->statusMapping($data['status']);
+        $responsePaymentDTO->address = $data['receivingAddress'];
+        $responsePaymentDTO->expirationTime = Carbon::parse($data['expiresAt'])->timestamp;
+        $responsePaymentDTO->cryptoNetwork = $data['network'];
+        $responsePaymentDTO->currency = $data['currency'];
+        $responsePaymentDTO->amount = $data['amount'];        
+
+        return $responsePaymentDTO;
+    }
+
+    public function handleWebhook(Request $request): PaymentDTO
+    {
+        $payload = $request->all();
+        // Validate webhook signature if necessary
+        // Process the webhook payload
+        $paymentId = $payload['paymentId'] ?? null;
+        if (!$paymentId) {
+            throw new \Exception('Invalid webhook payload: missing paymentId');
+        }
+        return $this->getPaymentById($paymentId);
     }
 }
