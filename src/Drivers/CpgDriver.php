@@ -18,6 +18,7 @@
 namespace MCXV\PaymentAdapter\Drivers;
 use MCXV\PaymentAdapter\Contracts\PaymentGatewayInterface;
 use MCXV\PaymentAdapter\DTO\CryptoInvoiceDTO;
+use MCXV\PaymentAdapter\DTO\CryptoCurrencyDTO;
 
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
@@ -25,11 +26,13 @@ use Illuminate\Http\Request;
 
 class CpgDriver implements PaymentGatewayInterface
 {
-    protected $config;
+    protected $config;    
+    protected $acceptCurrencies = [];
 
     public function __construct(array $config)
     {
         $this->config = $config;
+        $this->acceptCurrencies = config('payment_adapter.currencies', []);
     }
 
     private function statusMapping($status): string
@@ -42,6 +45,25 @@ class CpgDriver implements PaymentGatewayInterface
             'EXPIRED' => 'EXPIRED'
         ];
         return $mapping[$status] ?? 'EXPIRED';
+    }
+
+    /**
+     * Get currency key by network and symbol
+     *
+     * @param string $network
+     * @param string $symbol
+     * @return string|null
+     */
+    private function getCurrencyKey(string $network, string $symbol): ?string
+    {        
+        
+        foreach ($this->acceptCurrencies as $key => $currency) {
+            if (strtolower($currency['network']) === strtolower($network) && strtolower($currency['symbol']) === strtolower($symbol)) {
+                return $key;
+            }
+        }
+        
+        return null;
     }
 
     /**
@@ -93,14 +115,14 @@ class CpgDriver implements PaymentGatewayInterface
             throw new \Exception('Failed to retrieve payment: ' . $response->body());
         }
         $data = $response->json();
-        $payment = new CryptoInvoiceDTO();
-        $payment->id = $data['paymentId'];
-        $payment->amount = $data['amount'];
-        $payment->currency = $data['currency'];
-        $payment->cryptoNetwork = $data['network'];
-        $payment->status = $this->statusMapping($data['status']);
-        $payment->address = $data['receivingAddress'];
-        $payment->expirationTime = Carbon::parse($data['expiresAt'])->timestamp;
+        $payment = new CryptoInvoiceDTO(
+            $data['paymentId'],
+            $data['amount'],
+            new CryptoCurrencyDTO($this->getCurrencyKey($data['network'], $data['currency'])),
+            $this->statusMapping($data['status']),
+            $data['receivingAddress'],
+            Carbon::parse($data['expiresAt'])->timestamp
+        );
         
         return $payment;
     }
