@@ -1,7 +1,7 @@
 {
     "name": "mcxv/laravel-payment-gateway-adapter",
     "description": "Laravel payment adapter for various payment gateways",
-    "license": "Apache 2.0",
+    "license": "Apache-2.0",
     "authors": [
         {
             "name": "Duog Lee",
