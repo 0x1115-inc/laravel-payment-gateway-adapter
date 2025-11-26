@@ -116,11 +116,11 @@ class CpgDriver implements PaymentGatewayInterface
         }
         $data = $response->json();
 
-        // Get currency DTO
-        $currencyDto = new CryptoCurrencyDTO($this->getCurrencyKey($data['network'], $data['currency']));
-        if (!$currencyDto) {
+        // Get currency DTO        
+        if (!$this->getCurrencyKey($data['network'], $data['currency'])) {
             throw new \Exception('Unsupported currency/network combination: ' . $data['currency'] . '/' . $data['network']);
         }
+        $currencyDto = new CryptoCurrencyDTO($this->getCurrencyKey($data['network'], $data['currency']));
 
         $payment = new CryptoInvoiceDTO(
             $data['paymentId'],
