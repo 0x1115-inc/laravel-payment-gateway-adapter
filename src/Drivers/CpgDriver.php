@@ -115,10 +115,17 @@ class CpgDriver implements PaymentGatewayInterface
             throw new \Exception('Failed to retrieve payment: ' . $response->body());
         }
         $data = $response->json();
+
+        // Get currency DTO
+        $currencyDto = new CryptoCurrencyDTO($this->getCurrencyKey($data['network'], $data['currency']));
+        if (!$currencyDto) {
+            throw new \Exception('Unsupported currency/network combination: ' . $data['currency'] . '/' . $data['network']);
+        }
+
         $payment = new CryptoInvoiceDTO(
             $data['paymentId'],
             $data['amount'],
-            new CryptoCurrencyDTO($this->getCurrencyKey($data['network'], $data['currency'])),
+            $currencyDto,
             $this->statusMapping($data['status']),
             $data['receivingAddress'],
             Carbon::parse($data['expiresAt'])->timestamp
